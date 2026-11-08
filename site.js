@@ -1,15 +1,30 @@
-// Única interação: escolher um horário monta a mensagem do WhatsApp.
-document.querySelectorAll(".agenda").forEach((agenda) => {
-  const botao = agenda.querySelector(".agenda-botao");
-  const base = new URL(agenda.dataset.whatsapp);
-  const negocio = agenda.dataset.negocio;
-  agenda.querySelectorAll(".horario").forEach((h) => {
-    h.addEventListener("click", () => {
-      agenda.querySelectorAll(".horario").forEach((x) => x.setAttribute("aria-pressed", "false"));
-      h.setAttribute("aria-pressed", "true");
-      base.searchParams.set("text", `Olá! Quero agendar em ${negocio}: ${h.dataset.texto}.`);
-      botao.href = base.toString();
-      botao.textContent = `Agendar ${h.dataset.texto}`;
-    });
-  });
-});
+(() => {
+  const atividade = document.querySelector("#atividade");
+  const faturamento = document.querySelector("#faturamento");
+  const valor = document.querySelector("#valor-estimado");
+  const link = document.querySelector("#receber-calculo");
+  const tabs = [...document.querySelectorAll("[data-segmento]")];
+  const atualizarSimulador = () => {
+    const receita = Number(faturamento.value);
+    const aliquota = Number(atividade.value);
+    const imposto = receita * aliquota;
+    const formatado = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(imposto);
+    valor.textContent = formatado;
+    const mensagem = `Quero receber um cálculo ilustrativo para atividade ${atividade.options[atividade.selectedIndex].text}, faturamento mensal de ${faturamento.options[faturamento.selectedIndex].text}. Estimativa exibida no site: ${formatado}.`;
+    link.href = `${link.dataset.base.split("?")[0]}?text=${encodeURIComponent(mensagem)}`;
+  };
+
+  const mostrarSegmento = (id) => {
+    const tab = tabs.find((item) => item.dataset.segmento === id);
+    const segmento = tab && { nome: tab.dataset.nome, texto: tab.dataset.texto };
+    if (!segmento) return;
+    document.querySelector("#segmento-nome").textContent = segmento.nome;
+    document.querySelector("#segmento-texto").textContent = segmento.texto;
+    tabs.forEach((tab) => tab.setAttribute("aria-selected", String(tab.dataset.segmento === id)));
+  };
+
+  atividade.addEventListener("change", atualizarSimulador);
+  faturamento.addEventListener("change", atualizarSimulador);
+  tabs.forEach((tab) => tab.addEventListener("click", () => mostrarSegmento(tab.dataset.segmento)));
+  atualizarSimulador();
+})();
